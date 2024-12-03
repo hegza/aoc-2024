@@ -37,8 +37,8 @@ fn main() -> anyhow::Result<()> {
                         }
                     })
                     .any(|w| {
-                        ((w().all(|(a, b)| a > b) || w().all(|(a, b)| a < b))
-                            && w().all(|(a, b)| a.abs_diff(*b) >= 1 && a.abs_diff(*b) <= 3))
+                        (w().all(|(a, b)| a > b) || w().all(|(a, b)| a < b))
+                            && w().all(|(a, b)| a.abs_diff(*b) >= 1 && a.abs_diff(*b) <= 3)
                     })
         })
         .count();
