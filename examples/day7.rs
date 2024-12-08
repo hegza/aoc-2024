@@ -1,4 +1,5 @@
 use itertools::Itertools;
+use log::info;
 
 const INPUT: &str = include_str!("inputs/day7.txt");
 
@@ -29,6 +30,8 @@ fn recurse2(acc: u64, vals: &[u64]) -> Vec<u64> {
 }
 
 fn main() -> anyhow::Result<()> {
+    env_logger::init();
+    info!(env!("CARGO_BIN_NAME"));
     let lines = INPUT.lines();
 
     let mut p1 = 0;
