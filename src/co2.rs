@@ -2,86 +2,211 @@ use std::{num::TryFromIntError, ops};
 
 /// 2D coordinate represented as a two-value tuple
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub struct Co2<T>(pub T, pub T);
+pub struct Coord2<T> {
+    pub x: T,
+    pub y: T,
+}
+pub type Co2<T> = Coord2<T>;
 
-// Impl (T, T) + (T, T) as (T + T, T + T) when T is Addable
-impl<T: ops::Add<Output = T>> ops::Add for Co2<T> {
-    type Output = Co2<T>;
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct Offset2<T>
+where
+    // Offsets are always signed
+    T: num::Signed,
+{
+    pub dx: T,
+    pub dy: T,
+}
+pub type Ofs2<T> = Offset2<T>;
 
-    fn add(self, rhs: Self) -> Self::Output {
-        Co2(self.0 + rhs.0, self.1 + rhs.1)
+/* === Construct === */
+
+#[macro_export]
+macro_rules! co2 {
+    ($x:expr, $y:expr) => {
+        Co2::from(($x, $y))
+    };
+}
+
+#[macro_export]
+macro_rules! ofs2 {
+    ($dx:expr, $dy:expr) => {
+        Ofs2::from(($dx, $dy))
+    };
+}
+
+impl<T, U> From<(U, U)> for Coord2<T>
+where
+    U: Into<T>,
+{
+    fn from(value: (U, U)) -> Self {
+        Self {
+            x: value.0.into(),
+            y: value.1.into(),
+        }
     }
 }
 
-impl<T> From<(T, T)> for Co2<T> {
-    fn from(value: (T, T)) -> Self {
-        Co2(value.0, value.1)
+impl<T, U> From<(U, U)> for Ofs2<T>
+where
+    U: Into<T>,
+    T: num::Signed,
+{
+    fn from(value: (U, U)) -> Self {
+        Self {
+            dx: value.0.into(),
+            dy: value.1.into(),
+        }
     }
 }
 
-impl ops::Add<(isize, isize)> for Co2<usize> {
-    type Output = (isize, isize);
+impl TryFrom<Coord2<usize>> for Coord2<isize> {
+    type Error = TryFromIntError;
 
-    fn add(self, rhs: (isize, isize)) -> Self::Output {
-        (self.0 as isize + rhs.0, self.1 as isize + rhs.1)
+    fn try_from(value: Coord2<usize>) -> Result<Self, Self::Error> {
+        Ok(Self {
+            x: value.x.try_into()?,
+            y: value.y.try_into()?,
+        })
     }
 }
 
-impl<T> Co2<T>
+impl TryFrom<Coord2<u64>> for Coord2<i64> {
+    type Error = TryFromIntError;
+
+    fn try_from(value: Coord2<u64>) -> Result<Self, Self::Error> {
+        Ok(Self {
+            x: value.x.try_into()?,
+            y: value.y.try_into()?,
+        })
+    }
+}
+
+/* === Convert === */
+
+impl<T> Coord2<T>
 where
     T: Copy,
 {
     pub fn as_tuple(&self) -> (T, T) {
-        (self.0, self.1)
+        (self.x, self.y)
+    }
+
+    pub fn try_as_tuple<U>(&self) -> Result<(U, U), TryFromIntError>
+    where
+        U: TryFrom<T>,
+        TryFromIntError: From<<U as TryFrom<T>>::Error>,
+    {
+        Ok((self.x.try_into()?, self.y.try_into()?))
+    }
+
+    #[inline(always)]
+    pub fn x(&self) -> T {
+        self.x
+    }
+
+    #[inline(always)]
+    pub fn y(&self) -> T {
+        self.y
     }
 }
 
-impl ops::Sub for Co2<usize> {
-    type Output = (isize, isize);
-
-    fn sub(self, rhs: Self) -> Self::Output {
-        (
-            self.0 as isize - rhs.0 as isize,
-            self.1 as isize - rhs.1 as isize,
-        )
+impl<T> Coord2<T>
+where
+    T: Copy + num::Signed,
+{
+    pub fn as_offset(&self) -> Offset2<T> {
+        Offset2 {
+            dx: self.x,
+            dy: self.y,
+        }
     }
 }
 
-impl ops::Sub for Co2<u64> {
-    type Output = (i64, i64);
+impl<T> Offset2<T>
+where
+    T: Copy + num::Signed,
+{
+    pub fn as_tuple(&self) -> (T, T) {
+        (self.dx, self.dy)
+    }
 
-    fn sub(self, rhs: Self) -> Self::Output {
-        (self.0 as i64 - rhs.0 as i64, self.1 as i64 - rhs.1 as i64)
+    pub fn as_coord(&self) -> Coord2<T> {
+        Coord2 {
+            x: self.dx,
+            y: self.dy,
+        }
+    }
+
+    #[inline(always)]
+    pub fn x(&self) -> T {
+        self.dx
+    }
+
+    #[inline(always)]
+    pub fn y(&self) -> T {
+        self.dy
     }
 }
 
-impl ops::Sub<(isize, isize)> for Co2<usize> {
-    type Output = (isize, isize);
-
-    fn sub(self, rhs: (isize, isize)) -> Self::Output {
-        (
-            self.0 as isize - rhs.0 as isize,
-            self.1 as isize - rhs.1 as isize,
-        )
+impl<T> From<Coord2<T>> for (T, T)
+where
+    T: Copy,
+{
+    fn from(value: Coord2<T>) -> Self {
+        value.as_tuple()
     }
 }
 
-impl TryFrom<(isize, isize)> for Co2<usize> {
-    type Error = TryFromIntError;
-
-    fn try_from(value: (isize, isize)) -> Result<Self, Self::Error> {
-        let row = usize::try_from(value.0)?;
-        let col = usize::try_from(value.1)?;
-        Ok(Co2(row, col))
+impl<T> From<Offset2<T>> for (T, T)
+where
+    T: Copy + num::Signed,
+{
+    fn from(value: Offset2<T>) -> Self {
+        value.as_tuple()
     }
 }
 
-impl TryFrom<(i64, i64)> for Co2<u64> {
-    type Error = TryFromIntError;
+/* === Calculate === */
 
-    fn try_from(value: (i64, i64)) -> Result<Self, Self::Error> {
-        let row = u64::try_from(value.0)?;
-        let col = u64::try_from(value.1)?;
-        Ok(Co2(row, col))
-    }
+macro_rules! impl_add {
+    ($lhs_t:ty | $rhs_t:ty = $out_t:ty, $out:ty) => {
+        impl ops::Add<$rhs_t> for $lhs_t {
+            type Output = $out_t;
+
+            fn add(self, rhs: $rhs_t) -> Self::Output {
+                <$out_t>::from((
+                    (self.x() as $out + rhs.x() as $out),
+                    (self.y() as $out + rhs.y() as $out),
+                ))
+            }
+        }
+    };
 }
+
+impl_add!(Co2<usize> | Co2<usize> = Ofs2<isize>, isize);
+impl_add!(Co2<u64> | Co2<u64> = Ofs2<i64>, i64);
+impl_add!(Co2<usize> | Ofs2<isize> = Ofs2<isize>, isize);
+impl_add!(Co2<u64> | Ofs2<i64> = Ofs2<i64>, i64);
+impl_add!(Ofs2<isize> | Ofs2<isize> = Ofs2<isize>, isize);
+
+macro_rules! impl_sub {
+    ($lhs_t:ty | $rhs_t:ty = $out_t:ty, $out:ty) => {
+        impl ops::Sub<$rhs_t> for $lhs_t {
+            type Output = $out_t;
+
+            fn sub(self, rhs: $rhs_t) -> Self::Output {
+                <$out_t>::from((
+                    (self.x() as $out - rhs.x() as $out),
+                    (self.y() as $out - rhs.y() as $out),
+                ))
+            }
+        }
+    };
+}
+
+impl_sub!(Co2<usize> | Co2<usize> = Ofs2<isize>, isize);
+impl_sub!(Co2<u64> | Co2<u64> = Ofs2<i64>, i64);
+impl_sub!(Co2<usize> | Ofs2<isize> = Ofs2<isize>, isize);
+impl_sub!(Co2<u64> | Ofs2<i64> = Ofs2<i64>, i64);
+impl_sub!(Ofs2<isize> | Ofs2<isize> = Ofs2<isize>, isize);

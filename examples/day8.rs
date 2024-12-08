@@ -1,4 +1,4 @@
-use aoc::Co2;
+use aoc::{co2, Co2};
 use itertools::Itertools;
 use log::info;
 use std::collections::*;
@@ -26,26 +26,26 @@ fn main() -> anyhow::Result<()> {
         lines.clone().next().unwrap().chars().count() as isize,
         lines.clone().count() as isize,
     );
-    let mut antennas: HashMap<char, Vec<Co2<_>>> = HashMap::new();
+    let mut antennas: HashMap<char, Vec<Co2<usize>>> = HashMap::new();
     for (c, co2) in lines.clone().enumerate().flat_map(|(y, line)| {
         line.chars()
             .enumerate()
             .filter(|(_, c)| c != &'.')
-            .map(move |(x, c)| (c, Co2(x, y)))
+            .map(move |(x, c)| (c, co2!(x, y)))
     }) {
         antennas.entry(c).or_insert(Vec::new()).push(co2);
     }
 
     let in_bounds = |(x, y): (isize, isize)| x >= 0 && y >= 0 && x < w && y < h;
 
-    let mut ans = HashSet::new();
+    let mut ans: HashSet<(isize, isize)> = HashSet::new();
     for (&l, &r) in antennas
         .keys()
         .flat_map(|c| antennas[c].iter().tuple_combinations::<(_, _)>())
     {
-        let (dx, dy) = r - l;
-        let an0 = l - (dx, dy);
-        let an1 = r + (dx, dy);
+        let ofs = r - l;
+        let an0 = (l - ofs).as_tuple();
+        let an1 = (r + ofs).as_tuple();
 
         if in_bounds(an0) {
             ans.insert(an0);
@@ -56,24 +56,25 @@ fn main() -> anyhow::Result<()> {
     }
     println!("p1: {}", ans.len());
 
-    let mut ans = HashSet::new();
+    let mut ans: HashSet<(isize, isize)> = HashSet::new();
     for (&l, &r) in antennas
         .keys()
         .flat_map(|c| antennas[c].iter().tuple_combinations::<(_, _)>())
     {
-        let (dx, dy) = r - l;
-        ans.insert((r.0 as isize, r.1 as isize));
-        ans.insert((l.0 as isize, l.1 as isize));
-        let mut an0 = l - (dx, dy);
-        let mut an1 = r + (dx, dy);
+        ans.insert(r.try_as_tuple().unwrap());
+        ans.insert(l.try_as_tuple().unwrap());
 
-        while in_bounds(an0) {
-            ans.insert(an0);
-            an0 = (an0.0 - dx, an0.1 - dy);
+        let ofs = r - l;
+        let mut an0 = l - ofs;
+        let mut an1 = r + ofs;
+
+        while in_bounds(an0.as_tuple()) {
+            ans.insert(an0.as_tuple());
+            an0 = an0 - ofs;
         }
-        while in_bounds(an1) {
-            ans.insert(an1);
-            an1 = (an1.0 + dx, an1.1 + dy);
+        while in_bounds(an1.as_tuple()) {
+            ans.insert(an1.as_tuple());
+            an1 = an1 + ofs;
         }
     }
     println!("p2: {}", ans.len());
