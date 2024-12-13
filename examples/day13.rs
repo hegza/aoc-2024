@@ -1,7 +1,6 @@
 use aoc::*;
 use itertools::Itertools;
 use log::info;
-use std::collections::*;
 
 const INPUT: &str = include_str!("inputs/day13.txt");
 
@@ -11,36 +10,19 @@ fn main() -> anyhow::Result<()> {
     let lines = INPUT.lines();
 
     let mut machs: Vec<((Co2<i64>, Co2<i64>), Co2<i64>)> = vec![];
+    let parse = |line: &str, delim| {
+        let mut v = line
+            .split_once(": ")
+            .unwrap()
+            .1
+            .split(", ")
+            .map(|s| s.split_once(delim).unwrap().1.parse::<i64>().unwrap());
+        (v.next().unwrap(), v.next().unwrap())
+    };
     for mut lines in &lines.chunks(4) {
-        let mut a = lines
-            .next()
-            .unwrap()
-            .split_once(": ")
-            .unwrap()
-            .1
-            .split(", ")
-            .map(|s| s.split_once('+').unwrap().1.parse::<i64>().unwrap());
-        let (oxa, oya) = (a.next().unwrap(), a.next().unwrap());
-
-        let mut b = lines
-            .next()
-            .unwrap()
-            .split_once(": ")
-            .unwrap()
-            .1
-            .split(", ")
-            .map(|s| s.split_once('+').unwrap().1.parse::<i64>().unwrap());
-        let (oxb, oyb) = (b.next().unwrap(), b.next().unwrap());
-
-        let mut p = lines
-            .next()
-            .unwrap()
-            .split_once(": ")
-            .unwrap()
-            .1
-            .split(", ")
-            .map(|s| s.split_once('=').unwrap().1.parse::<i64>().unwrap());
-        let (oxp, oyp) = (p.next().unwrap(), p.next().unwrap());
+        let (oxa, oya) = parse(lines.next().unwrap(), '+');
+        let (oxb, oyb) = parse(lines.next().unwrap(), '+');
+        let (oxp, oyp) = parse(lines.next().unwrap(), '=');
 
         machs.push((
             (co2! {y: oya, x: oxa}, co2! {y: oyb, x: oxb}),
@@ -51,15 +33,11 @@ fn main() -> anyhow::Result<()> {
     let p1: i64 = machs
         .iter()
         .cloned()
-        .map(|((a, b), p)| {
+        .filter_map(|((a, b), p)| {
             let det = a.x() * b.y() - b.x() * a.y();
             let n0 = (p.x() * b.y() - p.y() * b.x()) / det;
             let n1 = (-p.x() * a.y() + p.y() * a.x()) / det;
-            if a * n0 + b * n1 == p.into() {
-                n0 * 3 + n1
-            } else {
-                0
-            }
+            (a * n0 + b * n1 == p.into()).then(|| n0 * 3 + n1)
         })
         .sum();
 
@@ -77,15 +55,11 @@ fn main() -> anyhow::Result<()> {
                 },
             )
         })
-        .map(|((a, b), p)| {
+        .filter_map(|((a, b), p)| {
             let det = a.x() * b.y() - b.x() * a.y();
             let n0 = (p.x() * b.y() - p.y() * b.x()) / det;
             let n1 = (-p.x() * a.y() + p.y() * a.x()) / det;
-            if a * n0 + b * n1 == p.into() {
-                n0 * 3 + n1
-            } else {
-                0
-            }
+            (a * n0 + b * n1 == p.into()).then(|| n0 * 3 + n1)
         })
         .sum();
 
