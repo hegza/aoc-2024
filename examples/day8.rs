@@ -31,7 +31,7 @@ fn main() -> anyhow::Result<()> {
         line.chars()
             .enumerate()
             .filter(|(_, c)| c != &'.')
-            .map(move |(x, c)| (c, co2!(x, y)))
+            .map(move |(x, c)| (c, co2!(y, x)))
     }) {
         antennas.entry(c).or_insert(Vec::new()).push(co2);
     }
@@ -44,8 +44,8 @@ fn main() -> anyhow::Result<()> {
         .flat_map(|c| antennas[c].iter().tuple_combinations::<(_, _)>())
     {
         let ofs = r - l;
-        let an0 = (l - ofs).as_tuple();
-        let an1 = (r + ofs).as_tuple();
+        let an0 = (l - ofs).into();
+        let an1 = (r + ofs).into();
 
         if in_bounds(an0) {
             ans.insert(an0);
@@ -61,19 +61,19 @@ fn main() -> anyhow::Result<()> {
         .keys()
         .flat_map(|c| antennas[c].iter().tuple_combinations::<(_, _)>())
     {
-        ans.insert(r.try_as_tuple().unwrap());
-        ans.insert(l.try_as_tuple().unwrap());
+        ans.insert(r.try_into_tuple().unwrap());
+        ans.insert(l.try_into_tuple().unwrap());
 
         let ofs = r - l;
         let mut an0 = l - ofs;
         let mut an1 = r + ofs;
 
-        while in_bounds(an0.as_tuple()) {
-            ans.insert(an0.as_tuple());
+        while in_bounds(an0.into()) {
+            ans.insert(an0.into());
             an0 = an0 - ofs;
         }
-        while in_bounds(an1.as_tuple()) {
-            ans.insert(an1.as_tuple());
+        while in_bounds(an1.into()) {
+            ans.insert(an1.into());
             an1 = an1 + ofs;
         }
     }
