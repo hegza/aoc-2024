@@ -65,5 +65,31 @@ fn main() -> anyhow::Result<()> {
 
     println!("{p1}");
 
+    let p2: i64 = machs
+        .iter()
+        .cloned()
+        .map(|(rest, p)| {
+            (
+                rest,
+                Co2 {
+                    row: p.row + 10000000000000,
+                    col: p.col + 10000000000000,
+                },
+            )
+        })
+        .map(|((a, b), p)| {
+            let det = a.x() * b.y() - b.x() * a.y();
+            let n0 = (p.x() * b.y() - p.y() * b.x()) / det;
+            let n1 = (-p.x() * a.y() + p.y() * a.x()) / det;
+            if a * n0 + b * n1 == p.into() {
+                n0 * 3 + n1
+            } else {
+                0
+            }
+        })
+        .sum();
+
+    println!("{p2}");
+
     Ok(())
 }
