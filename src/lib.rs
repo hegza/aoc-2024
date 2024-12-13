@@ -6,7 +6,7 @@ pub use co2::*;
 pub use co3::*;
 pub use input::*;
 
-/// Clockwise, starting up
+/// Clockwise, starting up, (row, col) TODO
 pub const CARDINAL_OFFSETS: &[(i64, i64)] = &[(0, -1), (1, 0), (0, 1), (-1, 0)];
 pub const DIAGONAL_OFFSETS: &[(i64, i64)] = &[(-1, -1), (1, -1), (1, 1), (-1, 1)];
 

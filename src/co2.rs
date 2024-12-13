@@ -1,10 +1,14 @@
 use std::{num::TryFromIntError, ops};
 
 /// 2D coordinate represented as a two-value tuple
+///
+/// Row-major.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Coord2<T> {
-    pub y: T,
-    pub x: T,
+    /// Row
+    pub row: T,
+    /// Column
+    pub col: T,
 }
 pub type Co2<T> = Coord2<T>;
 
@@ -23,15 +27,18 @@ pub type Ofs2<T> = Offset2<T>;
 
 #[macro_export]
 macro_rules! co2 {
-    ($x:expr, $y:expr) => {
-        $crate::Coord2::from(($x, $y))
+    ($row:expr, $col:expr) => {
+        $crate::Coord2::from(($row, $col))
+    };
+    {y: $row:expr, x: $col:expr} => {
+        $crate::Coord2::from(($row, $col))
     };
 }
 
 #[macro_export]
 macro_rules! ofs2 {
-    ($dx:expr, $dy:expr) => {
-        $crate::Offset2::from(($dx, $dy))
+    ($dy:expr, $dx:expr) => {
+        $crate::Offset2::from(($dy, $dx))
     };
 }
 
@@ -41,8 +48,8 @@ where
 {
     fn from(value: (U, U)) -> Self {
         Self {
-            x: value.0.into(),
-            y: value.1.into(),
+            row: value.0.into(),
+            col: value.1.into(),
         }
     }
 }
@@ -54,8 +61,8 @@ where
 {
     fn from(value: (U, U)) -> Self {
         Self {
-            dx: value.0.into(),
-            dy: value.1.into(),
+            dy: value.0.into(),
+            dx: value.1.into(),
         }
     }
 }
@@ -65,8 +72,8 @@ impl TryFrom<Coord2<usize>> for Coord2<isize> {
 
     fn try_from(value: Coord2<usize>) -> Result<Self, Self::Error> {
         Ok(Self {
-            x: value.x.try_into()?,
-            y: value.y.try_into()?,
+            row: value.row.try_into()?,
+            col: value.col.try_into()?,
         })
     }
 }
@@ -76,8 +83,8 @@ impl TryFrom<Coord2<u64>> for Coord2<i64> {
 
     fn try_from(value: Coord2<u64>) -> Result<Self, Self::Error> {
         Ok(Self {
-            x: value.x.try_into()?,
-            y: value.y.try_into()?,
+            row: value.row.try_into()?,
+            col: value.col.try_into()?,
         })
     }
 }
@@ -93,17 +100,27 @@ where
         U: TryFrom<T>,
         TryFromIntError: From<<U as TryFrom<T>>::Error>,
     {
-        Ok((self.x.try_into()?, self.y.try_into()?))
+        Ok((self.row.try_into()?, self.col.try_into()?))
     }
 
     #[inline(always)]
-    pub fn x(&self) -> T {
-        self.x
+    pub fn row(&self) -> T {
+        self.row
+    }
+
+    #[inline(always)]
+    pub fn col(&self) -> T {
+        self.col
     }
 
     #[inline(always)]
     pub fn y(&self) -> T {
-        self.y
+        self.row
+    }
+
+    #[inline(always)]
+    pub fn x(&self) -> T {
+        self.col
     }
 }
 
@@ -112,13 +129,13 @@ where
     T: Copy + num::Signed,
 {
     #[inline(always)]
-    pub fn x(&self) -> T {
-        self.dx
+    pub fn row(&self) -> T {
+        self.dy
     }
 
     #[inline(always)]
-    pub fn y(&self) -> T {
-        self.dy
+    pub fn col(&self) -> T {
+        self.dx
     }
 }
 
@@ -127,7 +144,7 @@ where
     T: Copy,
 {
     fn from(value: Coord2<T>) -> Self {
-        (value.x, value.y)
+        (value.row, value.col)
     }
 }
 
@@ -136,7 +153,7 @@ where
     T: Copy + num::Signed,
 {
     fn from(value: Offset2<T>) -> Self {
-        (value.dx, value.dy)
+        (value.dy, value.dx)
     }
 }
 
@@ -146,8 +163,8 @@ where
 {
     fn from(value: Coord2<T>) -> Self {
         Offset2 {
-            dx: value.x,
-            dy: value.y,
+            dy: value.row,
+            dx: value.col,
         }
     }
 }
@@ -158,8 +175,8 @@ where
 {
     fn from(value: Offset2<T>) -> Self {
         Coord2 {
-            x: value.dx,
-            y: value.dy,
+            row: value.dy,
+            col: value.dx,
         }
     }
 }
@@ -173,8 +190,8 @@ macro_rules! impl_add {
 
             fn add(self, rhs: $rhs_t) -> Self::Output {
                 <$out_t>::from((
-                    (self.x() as $out + rhs.x() as $out),
-                    (self.y() as $out + rhs.y() as $out),
+                    (self.row() as $out + rhs.row() as $out),
+                    (self.col() as $out + rhs.col() as $out),
                 ))
             }
         }
@@ -183,6 +200,7 @@ macro_rules! impl_add {
 
 impl_add!(Co2<usize> | Co2<usize> = Ofs2<isize>, isize);
 impl_add!(Co2<u64> | Co2<u64> = Ofs2<i64>, i64);
+impl_add!(Co2<i64> | Co2<i64> = Ofs2<i64>, i64);
 impl_add!(Co2<usize> | Ofs2<isize> = Ofs2<isize>, isize);
 impl_add!(Co2<u64> | Ofs2<i64> = Ofs2<i64>, i64);
 
@@ -196,8 +214,8 @@ macro_rules! impl_sub {
 
             fn sub(self, rhs: $rhs_t) -> Self::Output {
                 <$out_t>::from((
-                    (self.x() as $out - rhs.x() as $out),
-                    (self.y() as $out - rhs.y() as $out),
+                    (self.row() as $out - rhs.row() as $out),
+                    (self.col() as $out - rhs.col() as $out),
                 ))
             }
         }
@@ -211,3 +229,21 @@ impl_sub!(Co2<u64> | Ofs2<i64> = Ofs2<i64>, i64);
 
 impl_sub!(Ofs2<isize> | Ofs2<isize> = Ofs2<isize>, isize);
 impl_sub!(Ofs2<i64> | Ofs2<i64> = Ofs2<i64>, i64);
+
+macro_rules! impl_mul {
+    ($lhs_t:ty | $rhs_t:ty = $out_t:ty, $out:ty) => {
+        impl ops::Mul<$rhs_t> for $lhs_t {
+            type Output = $out_t;
+
+            fn mul(self, rhs: $rhs_t) -> Self::Output {
+                <$out_t>::from((
+                    (self.row() as $out * rhs as $out),
+                    (self.col() as $out * rhs as $out),
+                ))
+            }
+        }
+    };
+}
+
+impl_mul!(Co2<u64> | u64 = Co2<u64>, u64);
+impl_mul!(Co2<i64> | i64 = Co2<i64>, i64);

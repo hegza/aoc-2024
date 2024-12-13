@@ -1,5 +1,7 @@
 use std::ops;
 
+use crate::{co2, Co2};
+
 /// A 2D grid of characters
 pub struct CharGrid(Vec<Vec<char>>);
 
@@ -26,6 +28,18 @@ impl CharGrid {
     /// Returns (height, width) or (rows, columns)
     pub fn dim(&self) -> (usize, usize) {
         (self.h(), self.w())
+    }
+
+    pub fn positions(&self, c: char) -> Vec<Co2<usize>> {
+        let mut poss = Vec::new();
+        for row in 0..self.h() {
+            for col in 0..self.w() {
+                if self.0[row][col] == c {
+                    poss.push(co2!(row, col));
+                }
+            }
+        }
+        poss
     }
 }
 
