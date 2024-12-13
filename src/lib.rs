@@ -1,8 +1,10 @@
 mod co2;
 mod co3;
+mod input;
 
 pub use co2::*;
 pub use co3::*;
+pub use input::*;
 
 /// Clockwise, starting up
 pub const CARDINAL_OFFSETS: &[(i64, i64)] = &[(0, -1), (1, 0), (0, 1), (-1, 0)];

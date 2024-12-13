@@ -3,9 +3,9 @@ use std::{num::TryFromIntError, ops};
 /// 3D coordinate represented as a three-value tuple
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Coord3<T> {
-    pub x: T,
-    pub y: T,
     pub z: T,
+    pub y: T,
+    pub x: T,
 }
 pub type Co3<T> = Coord3<T>;
 
@@ -15,9 +15,9 @@ where
     // Offsets are always signed
     T: num::Signed,
 {
-    pub dx: T,
-    pub dy: T,
     pub dz: T,
+    pub dy: T,
+    pub dx: T,
 }
 pub type Ofs3<T> = Offset3<T>;
 

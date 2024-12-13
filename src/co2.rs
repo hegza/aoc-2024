@@ -3,8 +3,8 @@ use std::{num::TryFromIntError, ops};
 /// 2D coordinate represented as a two-value tuple
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Coord2<T> {
-    pub x: T,
     pub y: T,
+    pub x: T,
 }
 pub type Co2<T> = Coord2<T>;
 
@@ -14,8 +14,8 @@ where
     // Offsets are always signed
     T: num::Signed,
 {
-    pub dx: T,
     pub dy: T,
+    pub dx: T,
 }
 pub type Ofs2<T> = Offset2<T>;
 
@@ -88,11 +88,7 @@ impl<T> Coord2<T>
 where
     T: Copy,
 {
-    pub fn as_tuple(&self) -> (T, T) {
-        (self.x, self.y)
-    }
-
-    pub fn try_as_tuple<U>(&self) -> Result<(U, U), TryFromIntError>
+    pub fn try_into_tuple<U>(&self) -> Result<(U, U), TryFromIntError>
     where
         U: TryFrom<T>,
         TryFromIntError: From<<U as TryFrom<T>>::Error>,
@@ -111,33 +107,10 @@ where
     }
 }
 
-impl<T> Coord2<T>
-where
-    T: Copy + num::Signed,
-{
-    pub fn as_offset(&self) -> Offset2<T> {
-        Offset2 {
-            dx: self.x,
-            dy: self.y,
-        }
-    }
-}
-
 impl<T> Offset2<T>
 where
     T: Copy + num::Signed,
 {
-    pub fn as_tuple(&self) -> (T, T) {
-        (self.dx, self.dy)
-    }
-
-    pub fn as_coord(&self) -> Coord2<T> {
-        Coord2 {
-            x: self.dx,
-            y: self.dy,
-        }
-    }
-
     #[inline(always)]
     pub fn x(&self) -> T {
         self.dx
@@ -154,7 +127,7 @@ where
     T: Copy,
 {
     fn from(value: Coord2<T>) -> Self {
-        value.as_tuple()
+        (value.x, value.y)
     }
 }
 
@@ -163,7 +136,31 @@ where
     T: Copy + num::Signed,
 {
     fn from(value: Offset2<T>) -> Self {
-        value.as_tuple()
+        (value.dx, value.dy)
+    }
+}
+
+impl<T> From<Coord2<T>> for Offset2<T>
+where
+    T: num::Signed,
+{
+    fn from(value: Coord2<T>) -> Self {
+        Offset2 {
+            dx: value.x,
+            dy: value.y,
+        }
+    }
+}
+
+impl<T> From<Offset2<T>> for Coord2<T>
+where
+    T: num::Signed,
+{
+    fn from(value: Offset2<T>) -> Self {
+        Coord2 {
+            x: value.dx,
+            y: value.dy,
+        }
     }
 }
 
@@ -188,7 +185,9 @@ impl_add!(Co2<usize> | Co2<usize> = Ofs2<isize>, isize);
 impl_add!(Co2<u64> | Co2<u64> = Ofs2<i64>, i64);
 impl_add!(Co2<usize> | Ofs2<isize> = Ofs2<isize>, isize);
 impl_add!(Co2<u64> | Ofs2<i64> = Ofs2<i64>, i64);
+
 impl_add!(Ofs2<isize> | Ofs2<isize> = Ofs2<isize>, isize);
+impl_add!(Ofs2<i64> | Ofs2<i64> = Ofs2<i64>, i64);
 
 macro_rules! impl_sub {
     ($lhs_t:ty | $rhs_t:ty = $out_t:ty, $out:ty) => {
@@ -209,4 +208,6 @@ impl_sub!(Co2<usize> | Co2<usize> = Ofs2<isize>, isize);
 impl_sub!(Co2<u64> | Co2<u64> = Ofs2<i64>, i64);
 impl_sub!(Co2<usize> | Ofs2<isize> = Ofs2<isize>, isize);
 impl_sub!(Co2<u64> | Ofs2<i64> = Ofs2<i64>, i64);
+
 impl_sub!(Ofs2<isize> | Ofs2<isize> = Ofs2<isize>, isize);
+impl_sub!(Ofs2<i64> | Ofs2<i64> = Ofs2<i64>, i64);
